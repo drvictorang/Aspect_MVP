@@ -1,76 +1,119 @@
 import streamlit as st
 import time
-import pandas as pd
-from datetime import datetime
 
-# 1. PAGE CONFIG
-st.set_page_config(page_title="ASPECT Heuristic Engine", layout="wide")
+# --- 1. INITIAL SETUP & SESSION STATE ---
+st.set_page_config(page_title="ASPECT: Deep Heuristic Audit", layout="wide")
 
-# 2. SESSION STATE DATA STORAGE (Internal Database)
-if 'db' not in st.session_state:
-    st.session_state.db = []
+# Initialize timestamps in session state to persist across reruns
+if 'active' not in st.session_state:
+    st.session_state.active = False
+    st.session_state.t0 = 0  # Start Button Click
+    st.session_state.t1 = 0  # Discovery Finished
+    st.session_state.t2 = 0  # Declaration Finished
+    st.session_state.t3 = 0  # Execution Finished
 
-# 3. SIDEBAR: TESTER AUTH
+# --- 2. SIDEBAR: THRESHOLD SETTINGS ---
 with st.sidebar:
-    st.header("Diagnostic Control")
-    tester_email = st.text_input("Tester Email:", placeholder="student@example.com")
-    st.divider()
+    st.header("1. Threshold Settings (ms)")
     
-    # DOWNLOAD BUTTON (The Investor Proof)
-    if st.session_state.db:
-        df = pd.DataFrame(st.session_state.db)
-        csv = df.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="📊 Export Logic Database (CSV)",
-            data=csv,
-            file_name=f"ASPECT_Logic_Audit_{datetime.now().strftime('%Y%m%d')}.csv",
-            mime='text/csv',
-        )
+    st.subheader("Discovery (Reading)")
+    min_disco = st.number_input("Min Discovery", value=1000)
+    max_disco = st.number_input("Max Discovery", value=6000)
+    
+    st.subheader("Declaration (Logic)")
+    min_decl = st.number_input("Min Declaration", value=1000)
+    max_decl = st.number_input("Max Declaration", value=6000)
+    
+    st.subheader("Execution (Calculation)")
+    min_exec = st.number_input("Min Execution", value=1000)
+    max_exec = st.number_input("Max Execution", value=6000)
+    
+    st.divider()
+    if st.button("🔄 RESET ALL DATA"):
+        for key in ['t0', 't1', 't2', 't3']: st.session_state[key] = 0
+        st.session_state.active = False
+        st.rerun()
 
-# 4. MAIN INTERFACE
-st.title("ASPECT: Heuristic Logic Auditor")
-st.info("**Challenge:** 5:6:10 Ratio | 10% Fee | $88,800 Payout. Find Gross Profit.")
+# --- 3. MAIN CONTENT: THE CHALLENGE ---
+col_left, col_right = st.columns([2, 1])
 
-# CHRONOMETRY
-if 'start_time' not in st.session_state:
-    st.session_state.start_time = time.time()
+with col_left:
+    st.title("ASPECT: Deep Heuristic Audit")
+    st.markdown("### 🧩 The Heuristic Challenge")
+    st.info("The cost of petrol for a 240-km journey for a car which runs 12 km on each liter of petrol is $24. "
+            "What would be the cost of petrol for a 500-km journey for a van which runs 10 km on each liter of petrol?")
 
-# MULTI-NODE QUESTIONS
-q1 = st.radio("1. What is the 'Logical Anchor'?", ["Fee", "Net Profit", "Remainder"], index=None)
-q2 = st.radio("2. How many 'units' represent the Remainder?", ["10", "11", "21"], index=None)
-q3 = st.radio("3. C's 10% Fee is calculated from...?", ["Gross Profit", "Net Profit"], index=None)
+    # START TRIGGER
+    if not st.session_state.active:
+        if st.button("▶️ START FORENSIC AUDIT", type="primary"):
+            st.session_state.t0 = time.time() * 1000
+            st.session_state.active = True
+            st.rerun()
+    
+    # NODES (Sequential Visibility)
+    if st.session_state.active:
+        # Node 1
+        st.markdown("---")
+        st.markdown("### 🔍 Node 1: Discovery")
+        q1 = st.radio("What is the cost per litre?", ["$1.10", "$1.20", "$1.30"], index=None)
+        if q1 and st.session_state.t1 == 0:
+            st.session_state.t1 = time.time() * 1000
+            st.rerun()
 
-# 5. THE SUBMISSION LOGIC
-if st.button("Submit & Record Audit"):
-    if not tester_email:
-        st.warning("Identification Required.")
-    elif None in [q1, q2, q3]:
-        st.warning("All Logic Nodes must be completed.")
-    else:
-        # Calculate Metrics
-        end_time = time.time()
-        latency = end_time - st.session_state.start_time
-        score = sum([q1 == "Remainder", q2 == "21", q3 == "Net Profit"])
+        # Node 2
+        if st.session_state.t1 > 0:
+            st.markdown("### ⚠️ Node 2: Declaration")
+            q2 = st.radio("How many litres are needed for the van?", ["40 Litres", "45 Litres", "50 Litres"], index=None)
+            if q2 and st.session_state.t2 == 0:
+                st.session_state.t2 = time.time() * 1000
+                st.rerun()
+
+        # Node 3
+        if st.session_state.t2 > 0:
+            st.markdown("### ⚙️ Node 3: Execution")
+            q3 = st.radio("Calculate total cost for the Van:", ["$55.00", "$60.00", "$65.00"], index=None)
+            if q3 and st.session_state.t3 == 0:
+                st.session_state.t3 = time.time() * 1000
+                st.rerun()
+
+# --- 4. RIGHT CONTENT: HEURISTIC DASHBOARD ---
+with col_right:
+    st.header("Heuristic Dashboard")
+    st.divider()
+
+    # Calculation 1: Discovery = T1 - T0
+    if st.session_state.t1 > 0:
+        d_time = int(st.session_state.t1 - st.session_state.t0)
+        st.subheader(f"Discovery: {d_time} ms = {d_time/60000:.2f} minutes")
+        if d_time < min_disco: res = "Result: Guessing"
+        elif d_time > max_disco: res = "Result: Logic Lag / Overload"
+        else: res = "Result: Within Threshold"
+        st.write(res)
+
+    # Calculation 2: Declaration = T2 - T1
+    if st.session_state.t2 > 0:
+        decl_time = int(st.session_state.t2 - st.session_state.t1)
+        st.subheader(f"Declaration: {decl_time} ms = {decl_time/60000:.2f} minutes")
+        if decl_time < min_decl: res = "Result: Impulsive / No Strategy"
+        elif decl_time > max_decl: res = "Result: Cognitive Stalling"
+        else: res = "Result: Within Threshold"
+        st.write(res)
+
+    # Calculation 3: Execution = T3 - T2
+    if st.session_state.t3 > 0:
+        e_time = int(st.session_state.t3 - st.session_state.t2)
+        st.subheader(f"Execution: {e_time}ms = {e_time/60000:.2f} minutes")
+        if e_time < min_exec: res = "Result: Guessing / No Strategy"
+        elif e_time > max_exec: res = "Result: Slow Computation"
+        else: res = "Result: Within Threshold"
+        st.write(res)
+        st.success("Audit Complete.")
+
+# --- NEW: TOTAL TIME CALCULATION ---
+        st.divider()
+        total_time_ms = int(st.session_state.t3 - st.session_state.t0)
+        total_minutes = total_time_ms / 60000
         
-        # Save to Internal Database
-        audit_entry = {
-            "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "Email": tester_email,
-            "Latency_Seconds": round(latency, 2),
-            "Logic_Score": f"{score}/3",
-            "Node_1": q1,
-            "Node_2": q2,
-            "Node_3": q3
-        }
-        st.session_state.db.append(audit_entry)
-        
-        # UI FEEDBACK
-        st.success(f"Audit Complete. Data Logged for {tester_email}")
-        
-        col1, col2 = st.columns(2)
-        col1.metric("Decision Latency", f"{round(latency, 2)}s")
-        col2.metric("Heuristic Accuracy", f"{score}/3")
-        
-        if score < 3:
-            st.error("Recursive Success Fireback Engaged. View Alpha Path below.")
-            st.image("https://via.placeholder.com/800x400.png?text=ALPHA+PATH:+Visual+Hierarchy+Bridge")
+        st.subheader("📊 Audit Summary")
+        st.metric("Total Time Taken", f"{total_time_ms}ms", f"{total_minutes:.2f}minutes")
+        st.success("Full Forensic Audit Logged.")
