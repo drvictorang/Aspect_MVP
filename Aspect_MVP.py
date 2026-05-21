@@ -17,16 +17,16 @@ with st.sidebar:
     st.header("1. Threshold Settings (ms)")
     
     st.subheader("Discovery (Reading)")
-    min_disco = st.number_input("Min Discovery", value=1000)
-    max_disco = st.number_input("Max Discovery", value=6000)
+    min_disco = st.number_input("Min Discovery", value=10000)
+    max_disco = st.number_input("Max Discovery", value=60000)
     
     st.subheader("Declaration (Logic)")
-    min_decl = st.number_input("Min Declaration", value=1000)
-    max_decl = st.number_input("Max Declaration", value=6000)
+    min_decl = st.number_input("Min Declaration", value=10000)
+    max_decl = st.number_input("Max Declaration", value=60000)
     
     st.subheader("Execution (Calculation)")
-    min_exec = st.number_input("Min Execution", value=1000)
-    max_exec = st.number_input("Max Execution", value=6000)
+    min_exec = st.number_input("Min Execution", value=10000)
+    max_exec = st.number_input("Max Execution", value=60000)
     
     st.divider()
     if st.button("🔄 RESET ALL DATA"):
